@@ -6,5 +6,26 @@ judo_interpolator helps you to interpolate your vars inside the chain. Based on 
 
 ## How-to install:
 
+To install the dependency:
+
+```bash
+go get -u github.com/judoDSL/judo_interpolator
+```
+
 ## How-to use:
 
+You can see an example about how to use it. 
+
+```go
+package main
+
+import "github.com/judoDSL/judo_interpolator"
+
+func main () {
+	values := make(map[string] interface{})
+	values["name"] = "            Jose                 "
+	values["main_topic"] = "restore the snyderverse"
+	values["favorite_superhero"] = "batman who laughs"
+	judo_interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
+}
+```
