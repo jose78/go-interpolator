@@ -13,29 +13,29 @@ type content struct {
 // Provide the funcionality to work easily with the string intepolated
 type Content interface {
 	// Retrieve the string with the vvalues interpolated.
-	get() string
+	Get() string
 	// Write at console
-	print()
+	Print()
 	// Write at console
-	println()
+	Println()
 	// Create an error
-	error() error
+	Error() error
 }
 
 
-func (body content) get() string {
+func (body content) Get() string {
 	return body.value
 }
 
-func (body content) print() {
+func (body content) Print() {
 	fmt.Print(body.value)
 }
 
-func (body content) println() {
+func (body content) Println() {
 	fmt.Println(body.value)
 }
 
-func (body content) error() error {
+func (body content) Error() error {
 	return fmt.Errorf(body.value)
 }
 
