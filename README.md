@@ -29,3 +29,11 @@ func main () {
 	judo_interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
 }
 ```
+
+The result of this esecution is:
+
+```bash
+jose78@~/ws/test_judo_interpolator: 
+  ⲗ go run main.go 
+I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs
+```
