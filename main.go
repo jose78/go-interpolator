@@ -7,6 +7,9 @@ import (
 	"github.com/Masterminds/sprig/v3"
 )
 
+// Content generated within the command and returned by the Command.
+type VarsContent map[string]interface{}
+
 type content struct {
 	value string
 }
@@ -40,10 +43,10 @@ func (body content) Error() error {
 }
 
 // Given a string with the templates, it is interpolated with the value of the vars.
-func Do(str string, vars map[string]interface{}) Content {
+func Do[T ~map[string]interface{}](str string, vars T) Content {
 	funcMap := sprig.FuncMap()
 	tmpl, err := template.New("tmpl").Funcs(funcMap).Parse(str)
-	if err != nil {
+	if err != nil { 
 		panic(err)
 	}
 	var tmplBytes bytes.Buffer
