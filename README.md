@@ -35,6 +35,6 @@ func main () {
 The result of this esecution is:
 
 ```bash
-[jose78@~/ws/test_interpolator] $  go run main.go 
+[jose78@~/ws/interpolator] $  go run main.go 
 I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs
 ```
