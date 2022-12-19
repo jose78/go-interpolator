@@ -1,4 +1,4 @@
-package judo_interpolator
+package interpolator
 
 import (
 	"reflect"

@@ -1,6 +1,6 @@
-# judo_interpolator
+# interpolator
 
-judo_interpolator helps you to interpolate your vars inside the string. Based on the go templates and using the large list of functions provided by the [Sprig Functions Project](https://masterminds.github.io/sprig/), _judo_interpolator_ wants to make it easier to work with strings.
+The _interpolator_ project is part as _judoDSL_, the main goal of _interpolator_ is to help you to interpolate your vars inside the string and evaluate functions related with this vars. It is dased on the 'go templates' and using the large list of functions provided by the [Sprig Functions Project](https://masterminds.github.io/sprig/).
 
 
 ## How-to install:
