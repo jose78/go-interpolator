@@ -1,4 +1,4 @@
-module github.com/judoDSL/judo_interpolator
+module github.com/judoDSL/judo-interpolator
 
 go 1.19
 
