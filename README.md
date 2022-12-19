@@ -8,7 +8,7 @@ The _interpolator_ project is part as _judoDSL_, the main goal of _interpolator_
 To install the dependency:
 
 ```bash
-go get -u github.com/judoDSL/judo_interpolator
+go get -u github.com/judoDSL/interpolator
 ```
 
 ## How-to use:
@@ -18,14 +18,14 @@ You can see an example about how to use it.
 ```go
 package main
 
-import "github.com/judoDSL/judo_interpolator"
+import "github.com/judoDSL/interpolator"
 
 func main () {
 	values := make(map[string] interface{})
 	values["name"] = "            Jose                 "
 	values["main_topic"] = "restore the snyderverse"
 	values["favorite_superhero"] = "batman who laughs"
-	judo_interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
+	interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
 }
 ```
 
@@ -35,6 +35,6 @@ func main () {
 The result of this esecution is:
 
 ```bash
-[jose78@~/ws/test_judo_interpolator] $  go run main.go 
+[jose78@~/ws/interpolator] $  go run main.go 
 I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs
 ```
