@@ -32,7 +32,7 @@ func main () {
 
 
 
-The result of this esecution is:
+The result of this execution is:
 
 ```bash
 [jose78@~/ws/interpolator] $  go run main.go 
