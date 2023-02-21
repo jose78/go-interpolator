@@ -134,15 +134,20 @@ func Test_evaluateVars(t *testing.T) {
 
 func Test_fnExecuteInterpolator(t *testing.T) {
 
-	c := map[string]interface{}{
+	varsSubContent := map[string]interface{}{
+		"red":  "rojo",
+		"blue": "azul",
+		"pink": "rosa",
+	}
+	varsContent := map[string]interface{}{
 		"mix":       "{{ .house }}  {{ .cosa_rara | upper  }} ",
 		"house":     "A {{ .the }} casita",
-		"colour":    "rosa,",
 		"the":       "la {{ .cosa_rara | title  }}",
 		"animal":    "de {{ .the | title }} mariposa",
 		"cosa_rara": "demo_pato",
 		"mapa":      "demo_pato",
-		"cyclic" :   "This is a {{ .cyclic }}",
+		"cyclic":    "This is a {{ .cyclic }}",
+		"colour":    varsSubContent,
 	}
 
 	type args struct {
@@ -155,10 +160,11 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"should interpolate this", args{"{{ .mix }} ", c}, "A la Demo_pato casita  DEMO_PATO  ", false},
-		{"should interpolate this", args{"{{ .house }}  {{ .cosa_rara | upper  }} ", c}, "A la Demo_pato casita  DEMO_PATO ", false},
-		{"should interpolate this", args{"{{ .house }}", c}, "A la Demo_pato casita", false},
-		{"should generate a error of type cyclic", args{"{{ .cyclic }}", c}, "A La Demo_pato casita ", true},
+		{"should interpolate this", args{"{{ .mix }} ", varsContent}, "A la Demo_pato casita  DEMO_PATO  ", false},
+		{"should interpolate this", args{"{{ .house }}  {{ .cosa_rara | upper  }} ", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
+		{"should interpolate this", args{"{{ .house }}", varsContent}, "A la Demo_pato casita", false},
+		{"should generate a error of type cyclic", args{"{{ .cyclic }}", varsContent}, "A La Demo_pato casita ", true},
+		//{"should interpolate a coolor", args{"{{ .colour['pink'] }}", varsContent}, "rosa", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
