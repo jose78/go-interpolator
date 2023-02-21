@@ -38,42 +38,7 @@ var (
 	index int = 0
 )
 
-// Custom type of map[string]interface{}
-//type VarsContent map[string]interface{}
-
-//type content struct {
-//	value string
-//}
-//
-// Interface that provides the functionality to easily work with the interpolated string
-//type Content interface {
-//	// Retrieve the string with the vvalues interpolated.
-//	Get() string
-//	// Write to console
-//	Print()
-//	// Write to console
-//	Println()
-//	// Create an error
-//	Error() error
-//}
-
-//func (body content) Get() string {
-//	return body.value
-//}
-//
-//func (body content) Print() {
-//	fmt.Print(body.value)
-//}
-//
-//func (body content) Println() {
-//	fmt.Println(body.value)
-//}
-//
-//func (body content) Error() error {
-//	return fmt.Errorf(body.value)
-//}
-
-func ExtractKeys(str string) []string {
+func extractKeys(str string) []string {
 	var replaceRegexPattern = regexp.MustCompile(`{{|\|(.*?)}}|\.|\}}`)
 	var re = regexp.MustCompile(`{{[ ]*.([a-zA-Z\_\-| ]*) [0-9a-zA-Z \[\],.]*[ ]*}}`)
 	lstKeys := []string{}
@@ -84,11 +49,7 @@ func ExtractKeys(str string) []string {
 	return lstKeys
 }
 
-func evaluateVars(mapsContainer map[string]interface{}) {
-
-}
-
-func ExecuteInterpolator(str string, vars map[string]interface{}, currentKey string, keysEvaluated map[string]string) (string, error) {
+func executeInterpolator(str string, vars map[string]interface{}, currentKey string, keysEvaluated map[string]string) (string, error) {
 	fmt.Printf("\n\n\n*************************************************************\nindex:%v - currentKey:%s, current str:[%s]\n", index, currentKey, str)
 	index = index + 1
 	fnInterpolateString := func(str string, vars map[string]interface{}) string {
@@ -105,11 +66,11 @@ func ExecuteInterpolator(str string, vars map[string]interface{}, currentKey str
 		return tmplBytes.String()
 	}
 	result := fnInterpolateString(str, vars)
-	lstKeys := ExtractKeys(result)
+	lstKeys := extractKeys(result)
 	fmt.Printf("generated result:[%s] and list of keys detected:%v", result, lstKeys)
 	if len(lstKeys) == 0 {
 		vars[currentKey] = result
-		lstKeys = ExtractKeys(str)
+		lstKeys = extractKeys(str)
 		if len(lstKeys) > 0 {
 			for _, item := range lstKeys {
 				keysEvaluated[item] = ""
@@ -125,7 +86,7 @@ func ExecuteInterpolator(str string, vars map[string]interface{}, currentKey str
 			if ok || item == currentKey {
 				return "", fmt.Errorf("error, cyclic interpolation detected over the key %s", value)
 			}
-			valueEvaluated, err := ExecuteInterpolator(vars[item].(string), vars, item, keysEvaluated)
+			valueEvaluated, err := executeInterpolator(vars[item].(string), vars, item, keysEvaluated)
 			if err != nil {
 				return "", fmt.Errorf("error, generated to execute a recursive interpolation using the key '%s' with the content [%s], err: [%v]", item, vars[item].(string), err)
 			}
@@ -139,56 +100,7 @@ func ExecuteInterpolator(str string, vars map[string]interface{}, currentKey str
 }
 
 //// Given a string with the templates, it is interpolated with the value of the vars.
-//func Do(str string, vars map[string]interface{}) (Content, error) {
-//
-//	var fnEvaluateVars func(internalVars map[string]interface{}, keysEvaluated map[string]string) error
-//	fnEvaluateVars = func(internalVars map[string]interface{}, keysEvaluated map[string]string) error {
-//		var re = regexp.MustCompile(`{{[ ]*.[0-9a-zA-Z \[\],.|]+[ ]*}}`)
-//
-//		var str = "Lo cierto es que en estos momentos estamos en las antípodas {{ .Hola }}  sdasd {{ .Adios | title }} vaya ikaos"
-//
-//		for i, match := range re.FindAllString(str, -1) {
-//			fmt.Println(match, "found at index", i)
-//		}
-//
-//		for key, value := range internalVars {
-//			if _, ok := keysEvaluated[key]; ok {
-//				return fmt.Errorf("error, ciclic evaluation key:[%s] - value:[%s]", key, value)
-//			}
-//
-//			if reflect.TypeOf(value).Name() == "string" {
-//				lstMatches := re.FindAllString(str, -1)
-//				if len(lstMatches) == 0 {
-//					keysEvaluated[key] = ""
-//					internalVars[key] = ""
-//					//fnExecuteInterpolator(value.(string), internalVars)
-//				}
-//			}
-//		}
-//
-//		flagNotContentToBeParsed := true
-//		var trace string = ""
-//
-//		for flagNotContentToBeParsed {
-//			flagNotContentToBeParsed = false
-//			for key, value := range internalVars {
-//				trace = trace + fmt.Sprintf("Key:[%s] - value:[%s]\n", key, value.(string))
-//				if reflect.TypeOf(value).Name() == "string" && strings.Contains(value.(string), "{{") {
-//					if strings.Contains(value.(string), fmt.Sprintf(".%s", key)) {
-//						return fmt.Errorf("error, cyclic interpolation with key '%s': %s", key, trace)
-//					}
-//					result := ""
-//					//fnExecuteInterpolator(value.(string), internalVars)
-//					vars[key] = result
-//					flagNotContentToBeParsed = true
-//				}
-//			}
-//		}
-//		return nil
-//	}
-//
-//	keysEvaluated := make(map[string]string)
-//	err := fnEvaluateVars(vars, keysEvaluated)
-//	return content{value: fnExecuteInterpolator(str, vars, nil)}, err
-//}
-//
+func Do(str string, vars map[string]interface{}) (string, error) {
+	result, err:= executeInterpolator(str, vars, "", map[string]string{})
+	return result, err
+}

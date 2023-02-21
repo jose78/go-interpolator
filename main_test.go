@@ -105,29 +105,11 @@ func TestExtractKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExtractKeys(tt.args.str)
+			got := extractKeys(tt.args.str)
 
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExtractKeys() = %v, want %v", got, tt.want)
 			}
-		})
-	}
-}
-
-func Test_evaluateVars(t *testing.T) {
-
-	type args struct {
-		mapsContainer map[string]interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			evaluateVars(tt.args.mapsContainer)
 		})
 	}
 }
@@ -168,7 +150,7 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExecuteInterpolator(tt.args.str, tt.args.vars, "", map[string]string{})
+			got, err := Do(tt.args.str, tt.args.vars)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("fnExecuteInterpolator() should return an error and returned: %s", got)
