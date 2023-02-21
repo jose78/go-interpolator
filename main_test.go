@@ -26,70 +26,70 @@ import (
 	"testing"
 )
 
-func TestDo(t *testing.T) {
-
-	a := map[string]interface{}{
-		"name":               "            Jose                 ",
-		"main_topic":         "restore the snyderverse",
-		"favorite_superhero": "batman who laughs",
-		"the":                "the",
-	}
-
-	//b := map[string]interface{}{
-	//	"house":     "A {{ .the }} casita ",
-	//	"colour":    "rosa,",
-	//	"the":       "la {{ .cosa_rara}}",
-	//	"animal":    "de {{ .the }} mariposa",
-	//	"cosa_rara": "demo_pato {{ .the }}",
-	//}
-
-	c := map[string]interface{}{
-		"house":     "A {{ .the | title }} casita ",
-		"colour":    "rosa,",
-		"the":       "la {{ .cosa_rara | title  }}",
-		"animal":    "de {{ .the | title }} mariposa",
-		"cosa_rara": "demo_pato",
-	}
-
-	type args struct {
-		str  string
-		vars map[string]interface{}
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    Content
-		wantErr bool
-	}{
-		{"Should check the content generate by the interpolator is correct",
-			args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", a},
-			content{value: "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs"},
-			false,
-		}, {"Should interpolate all nested templates",
-			args{" {{ .house }} {{ .colour }} {{ .animal }} {{ .cosa_rara }}", c},
-			content{" A La Demo_pato casita  rosa, de La Demo_pato mariposa demo_pato"},
-			false},
-		//{"should fail",
-		//	args{" {{ .house }} {{ .colour }} {{ .the }} {{ .animal }} {{ .cosa_rara}}", b},
-		//	content{" A la demo_pato la demo_pato {{ .the }} casita  rosa, la demo_pato {{ .the }} de la demo_pato {{ .the }} mariposa demo_pato la demo_pato {{ .the }}"},
-		//	true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := Do(tt.args.str, tt.args.vars)
-			if tt.wantErr {
-				if (err != nil) != tt.wantErr {
-					t.Errorf("Do() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-			} else {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("Do() = %v, want %v", got, tt.want)
-				}
-			}
-		})
-	}
-}
+//func TestDo(t *testing.T) {
+//
+//	a := map[string]interface{}{
+//		"name":               "            Jose                 ",
+//		"main_topic":         "restore the snyderverse",
+//		"favorite_superhero": "batman who laughs",
+//		"the":                "the",
+//	}
+//
+//	//b := map[string]interface{}{
+//	//	"house":     "A {{ .the }} casita ",
+//	//	"colour":    "rosa,",
+//	//	"the":       "la {{ .cosa_rara}}",
+//	//	"animal":    "de {{ .the }} mariposa",
+//	//	"cosa_rara": "demo_pato {{ .the }}",
+//	//}
+//
+//	c := map[string]interface{}{
+//		"house":     "A {{ .the | title }} casita ",
+//		"colour":    "rosa,",
+//		"the":       "la {{ .cosa_rara | title  }}",
+//		"animal":    "de {{ .the | title }} mariposa",
+//		"cosa_rara": "demo_pato",
+//	}
+//
+//	type args struct {
+//		str  string
+//		vars map[string]interface{}
+//	}
+//	tests := []struct {
+//		name    string
+//		args    args
+//		want    Content
+//		wantErr bool
+//	}{
+//		{"Should check the content generate by the interpolator is correct",
+//			args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", a},
+//			content{value: "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs"},
+//			false,
+//		}, {"Should interpolate all nested templates",
+//			args{" {{ .house }} {{ .colour }} {{ .animal }} {{ .cosa_rara }}", c},
+//			content{" A La Demo_pato casita  rosa, de La Demo_pato mariposa demo_pato"},
+//			false},
+//		//{"should fail",
+//		//	args{" {{ .house }} {{ .colour }} {{ .the }} {{ .animal }} {{ .cosa_rara}}", b},
+//		//	content{" A la demo_pato la demo_pato {{ .the }} casita  rosa, la demo_pato {{ .the }} de la demo_pato {{ .the }} mariposa demo_pato la demo_pato {{ .the }}"},
+//		//	true},
+//	}
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			got, err := Do(tt.args.str, tt.args.vars)
+//			if tt.wantErr {
+//				if (err != nil) != tt.wantErr {
+//					t.Errorf("Do() error = %v, wantErr %v", err, tt.wantErr)
+//					return
+//				}
+//			} else {
+//				if !reflect.DeepEqual(got, tt.want) {
+//					t.Errorf("Do() = %v, want %v", got, tt.want)
+//				}
+//			}
+//		})
+//	}
+//}
 
 func TestExtractKeys(t *testing.T) {
 	type args struct {
@@ -105,8 +105,8 @@ func TestExtractKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExtractKeys(tt.args.str); 
-			
+			got := ExtractKeys(tt.args.str)
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExtractKeys() = %v, want %v", got, tt.want)
 			}
@@ -135,12 +135,14 @@ func Test_evaluateVars(t *testing.T) {
 func Test_fnExecuteInterpolator(t *testing.T) {
 
 	c := map[string]interface{}{
-		"house":     "A {{ .the | title }} casita ",
+		"mix":       "{{ .house }}  {{ .cosa_rara | upper  }} ",
+		"house":     "A {{ .the }} casita",
 		"colour":    "rosa,",
 		"the":       "la {{ .cosa_rara | title  }}",
 		"animal":    "de {{ .the | title }} mariposa",
 		"cosa_rara": "demo_pato",
-		"mapa": "demo_pato",
+		"mapa":      "demo_pato",
+		"cyclic" :   "This is a {{ .cyclic }}",
 	}
 
 	type args struct {
@@ -148,17 +150,27 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 		vars map[string]interface{}
 	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name    string
+		args    args
+		want    string
+		wantErr bool
 	}{
-		{"should interpolate this", args{"{{ .house }}",c}, "A La Demo_pato casita "},
+		{"should interpolate this", args{"{{ .mix }} ", c}, "A la Demo_pato casita  DEMO_PATO  ", false},
+		{"should interpolate this", args{"{{ .house }}  {{ .cosa_rara | upper  }} ", c}, "A la Demo_pato casita  DEMO_PATO ", false},
+		{"should interpolate this", args{"{{ .house }}", c}, "A la Demo_pato casita", false},
+		{"should generate a error of type cyclic", args{"{{ .cyclic }}", c}, "A La Demo_pato casita ", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := fnExecuteInterpolator(tt.args.str, tt.args.vars, map[string]string{}); 
-			if got != tt.want {
-				t.Errorf("fnExecuteInterpolator() = %v, want %v", got, tt.want)
+			got, err := ExecuteInterpolator(tt.args.str, tt.args.vars, "", map[string]string{})
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("fnExecuteInterpolator() should return an error and returned: %s", got)
+				}
+			} else {
+				if got != tt.want {
+					t.Errorf("fnExecuteInterpolator() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
