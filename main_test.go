@@ -1,24 +1,3 @@
-/*
-The main goal of interpolator is to help you to interpolate your vars inside the string and evaluate functions related with this vars. It is dased on the 'go templates' and using the large list of functions provided by the Sprig Functions Project.
-it is an example ahout how to use it:
-
-	package main
-
-	import "github.com/judoDSL/interpolator"
-
-	func main () {
-		values := make(map[string] interface{})
-		values["name"] = "            Jose                 "
-		values["main_topic"] = "restore the snyderverse"
-		values["favorite_superhero"] = "batman who laughs"
-		interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
-	}
-
-It would be the result of the execution:
-
-	[jose78@~/ws/test_interpolator] $  go run main.go
-	I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs
-*/
 package interpolator
 
 import (
@@ -116,11 +95,6 @@ func TestExtractKeys(t *testing.T) {
 
 func Test_fnExecuteInterpolator(t *testing.T) {
 
-	varsSubContent := map[string]interface{}{
-		"red":  "rojo",
-		"blue": "azul",
-		"pink": "rosa",
-	}
 	varsContent := map[string]interface{}{
 		"mix":       "{{ .house }}  {{ .cosa_rara | upper  }} ",
 		"house":     "A {{ .the }} casita",
@@ -129,7 +103,12 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 		"cosa_rara": "demo_pato",
 		"mapa":      "demo_pato",
 		"cyclic":    "This is a {{ .cyclic }}",
-		"colour":    varsSubContent,
+		"colour": map[string]interface{}{
+			"red":    "rojo",
+			"blue":   "azul",
+			"pink":   "rosa",
+			"orange": "{{ mapa }}",
+		},
 	}
 
 	type args struct {
@@ -146,7 +125,8 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 		{"should interpolate this", args{"{{ .house }}  {{ .cosa_rara | upper  }} ", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
 		{"should interpolate this", args{"{{ .house }}", varsContent}, "A la Demo_pato casita", false},
 		{"should generate a error of type cyclic", args{"{{ .cyclic }}", varsContent}, "A La Demo_pato casita ", true},
-		//{"should interpolate a coolor", args{"{{ .colour['pink'] }}", varsContent}, "rosa", false},
+		{"should interpolate a coolor", args{"{{ .colour.pink }}", varsContent}, "rosa", false},
+		//{"should interpolate a coolor", args{"{{ .colour.orange }}", varsContent}, "demo_pato", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -159,6 +139,37 @@ func Test_fnExecuteInterpolator(t *testing.T) {
 				if got != tt.want {
 					t.Errorf("fnExecuteInterpolator() = %v, want %v", got, tt.want)
 				}
+			}
+		})
+	}
+}
+
+func Test_fnInterpolateString(t *testing.T) {
+
+	varsContent := map[string]interface{}{
+		"mix":       "{{ .house }}",
+		"house":     "A {{ .the }} casita",
+		"the":       "la {{ .cosa_rara | title  }}",
+		"animal":    "de {{ .the | title }} mariposa",
+		"cosa_rara": "demo_pato",
+	}
+
+
+	type args struct {
+		str  string
+		vars map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"Prueba", args{"{{ .the }}",varsContent}, "la {{ .cosa_rara | title  }}"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fnInterpolateString(tt.args.str, tt.args.vars); got != tt.want {
+				t.Errorf("fnInterpolateString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

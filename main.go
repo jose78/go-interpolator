@@ -24,13 +24,9 @@ package interpolator
 import (
 	"bytes"
 	"fmt"
-
-	//"math/rand"
 	"regexp"
-	//"strconv"
 	"strings"
 	"text/template"
-
 	"github.com/Masterminds/sprig/v3"
 )
 
@@ -49,22 +45,26 @@ func extractKeys(str string) []string {
 	return lstKeys
 }
 
+
+ func fnInterpolateString(str string, vars map[string]interface{}) string {
+	funcMap := sprig.FuncMap()
+	tmpl, err := template.New("template").Funcs(funcMap).Parse(str)
+	if err != nil {
+		panic(err)
+	}
+	var tmplBytes bytes.Buffer
+	err = tmpl.Execute(&tmplBytes, vars)
+	if err != nil {
+		panic(err)
+	}
+	return tmplBytes.String()
+}
+
+
 func executeInterpolator(str string, vars map[string]interface{}, currentKey string, keysEvaluated map[string]string) (string, error) {
 	fmt.Printf("\n\n\n*************************************************************\nindex:%v - currentKey:%s, current str:[%s]\n", index, currentKey, str)
 	index = index + 1
-	fnInterpolateString := func(str string, vars map[string]interface{}) string {
-		funcMap := sprig.FuncMap()
-		tmpl, err := template.New("template").Funcs(funcMap).Parse(str)
-		if err != nil {
-			panic(err)
-		}
-		var tmplBytes bytes.Buffer
-		err = tmpl.Execute(&tmplBytes, vars)
-		if err != nil {
-			panic(err)
-		}
-		return tmplBytes.String()
-	}
+
 	result := fnInterpolateString(str, vars)
 	lstKeys := extractKeys(result)
 	fmt.Printf("generated result:[%s] and list of keys detected:%v", result, lstKeys)
