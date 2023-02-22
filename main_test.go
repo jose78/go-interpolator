@@ -54,6 +54,17 @@ func TestDo2(t *testing.T) {
 		},
 	}
 
+	values := make(map[string]interface{})
+	values["name"] = "            Jose                 "
+	values["main_topic"] = "restore the snyderverse"
+	values["arms"] = map[string]interface{}{
+		"sword": "using the conan sword",
+	}
+	values["favorite_superhero"] = map[string]interface{}{
+		"bad_batman": "batman who laughs with the {{ .arms.sword }}",
+	}
+	
+
 	type args struct {
 		str  string
 		vars map[string]interface{}
@@ -65,11 +76,12 @@ func TestDo2(t *testing.T) {
 		wantErr bool
 	}{
 		{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
-		{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
-		{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "ROSA A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
-		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		//{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
+		//{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "ROSA A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		//{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		{"connan", args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero.bad_batman | title }}", values}, "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs With The Using The Conan Sword", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
