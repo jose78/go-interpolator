@@ -19,10 +19,9 @@ it is an example ahout how to use it:
 	[jose78@~/ws/test_interpolator] $  go run main.go
 	I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs
 */
-package main
+package interpolator
 
 import (
-	"github.com/judoDSL/interpolator"
 	"bytes"
 	"fmt"
 	"regexp"
@@ -31,14 +30,6 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 )
-	
-	func main () {
-		values := make(map[string] interface{})
-		values["name"] = "            Jose                 "
-		values["main_topic"] = "restore the snyderverse"
-		values["favorite_superhero"] = "batman who laughs"
-		interpolator.Do("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values).Println()
-	}
 
 func extractKeys(str string) []string {
 	var replaceRegexPattern = regexp.MustCompile(`{{|\|(.*?)}}|\}}`)
