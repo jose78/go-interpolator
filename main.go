@@ -27,6 +27,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
 	"github.com/Masterminds/sprig/v3"
 )
 
@@ -45,9 +46,13 @@ func extractKeys(str string) []string {
 	return lstKeys
 }
 
-
- func fnInterpolateString(str string, vars map[string]interface{}) string {
+func fnInterpolateString(str string, vars map[string]interface{}) string {
+	eval := func(strToInterpolate string) (string, error) {
+		result := fnInterpolateString(strToInterpolate, vars)
+		return result, nil
+	}
 	funcMap := sprig.FuncMap()
+	funcMap["eval"] = eval
 	tmpl, err := template.New("template").Funcs(funcMap).Parse(str)
 	if err != nil {
 		panic(err)
@@ -59,7 +64,6 @@ func extractKeys(str string) []string {
 	}
 	return tmplBytes.String()
 }
-
 
 func executeInterpolator(str string, vars map[string]interface{}, currentKey string, keysEvaluated map[string]string) (string, error) {
 	fmt.Printf("\n\n\n*************************************************************\nindex:%v - currentKey:%s, current str:[%s]\n", index, currentKey, str)
@@ -99,8 +103,34 @@ func executeInterpolator(str string, vars map[string]interface{}, currentKey str
 	return result, nil
 }
 
-//// Given a string with the templates, it is interpolated with the value of the vars.
+// // Given a string with the templates, it is interpolated with the value of the vars.
 func Do(str string, vars map[string]interface{}) (string, error) {
-	result, err:= executeInterpolator(str, vars, "", map[string]string{})
+	result, err := executeInterpolator(str, vars, "", map[string]string{})
 	return result, err
+}
+
+func Do2(str string, vars map[string]interface{}) (string, error) {
+	result := str
+	flagAskToResolveInterpolation := false
+
+	for !flagAskToResolveInterpolation {
+		lstKeys := extractKeys(result)
+		flagAskToResolveInterpolation = len(lstKeys) == 0
+		if !flagAskToResolveInterpolation {
+			for _, item := range lstKeys {
+				_, ok := vars[item]
+				if !ok {
+					panic("The variable item not exit")
+				}
+				pattern := fmt.Sprintf("{{[ ]+.%s", item)
+				var re = regexp.MustCompile(pattern)
+				for _, match := range re.FindAllString(result, -1) {
+					result = strings.ReplaceAll(result, match, fmt.Sprintf("{{ .%s | eval", item)) 
+				}
+			}
+			result = fnInterpolateString(result, vars)
+		}
+		result = fnInterpolateString(result, vars)
+	}
+	return result, nil
 }

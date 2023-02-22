@@ -154,7 +154,6 @@ func Test_fnInterpolateString(t *testing.T) {
 		"cosa_rara": "demo_pato",
 	}
 
-
 	type args struct {
 		str  string
 		vars map[string]interface{}
@@ -164,12 +163,61 @@ func Test_fnInterpolateString(t *testing.T) {
 		args args
 		want string
 	}{
-		{"Prueba", args{"{{ .the }}",varsContent}, "la {{ .cosa_rara | title  }}"},
+		{"Prueba", args{"{{ .the }}", varsContent}, "la {{ .cosa_rara | title  }}"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := fnInterpolateString(tt.args.str, tt.args.vars); got != tt.want {
 				t.Errorf("fnInterpolateString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDo2(t *testing.T) {
+
+	varsContent := map[string]interface{}{
+		"mix":       "{{ .house }}  {{ .cosa_rara | upper  }} ",
+		"house":     "A {{ .the }} casita",
+		"the":       "la {{ .cosa_rara | title  }}",
+		"animal":    "de {{ .the | title }} mariposa",
+		"cosa_rara": "demo_pato",
+		"mapa":      "demo_pato",
+		"redirect_pink": "{{ .colour.pink }}",
+		"redirect_orange": "{{ .colour.orange }}",
+		"cyclic":    "This is a {{ .cyclic }}",
+		"colour": map[string]interface{}{
+			"red":    "rojo",
+			"blue":   "azul",
+			"pink":   "rosa",
+			"orange": "{{ .mapa }}",
+		},
+	}
+
+	type args struct {
+		str  string
+		vars map[string]interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		//{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
+		//{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
+		{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "demo_pato", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Do2(tt.args.str, tt.args.vars)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Do2() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Do2() = %v, want %v", got, tt.want)
 			}
 		})
 	}
