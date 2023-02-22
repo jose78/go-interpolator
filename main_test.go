@@ -27,7 +27,7 @@ func Test_fnInterpolateString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fnInterpolateString(tt.args.str, tt.args.vars); got != tt.want {
+			if got := interpolateString(tt.args.str, tt.args.vars); got != tt.want {
 				t.Errorf("fnInterpolateString() = %v, want %v", got, tt.want)
 			}
 		})
@@ -37,15 +37,15 @@ func Test_fnInterpolateString(t *testing.T) {
 func TestDo2(t *testing.T) {
 
 	varsContent := map[string]interface{}{
-		"mix":       "{{ .house }}  {{ .cosa_rara | upper  }} ",
-		"house":     "A {{ .the }} casita",
-		"the":       "la {{ .cosa_rara | title  }}",
-		"animal":    "de {{ .the | title }} mariposa",
-		"cosa_rara": "demo_pato",
-		"mapa":      "demo_pato",
-		"redirect_pink": "{{ .colour.pink }}",
+		"mix":             "{{ .house }}  {{ .cosa_rara | upper  }} ",
+		"house":           "A {{ .the }} casita",
+		"the":             "la {{ .cosa_rara | title  }}",
+		"animal":          "de {{ .the | title }} mariposa",
+		"cosa_rara":       "demo_pato",
+		"mapa":            "demo_pato",
+		"redirect_pink":   "{{ .colour.pink }}",
 		"redirect_orange": "{{ .colour.orange }} {{ .mix }}",
-		"cyclic":    "This is a {{ .cyclic }}",
+		"cyclic":          "This is a {{ .cyclic }}",
 		"colour": map[string]interface{}{
 			"red":    "rojo",
 			"blue":   "azul",
@@ -70,7 +70,6 @@ func TestDo2(t *testing.T) {
 		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
 		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "ROSA A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
 		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
-	
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

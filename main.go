@@ -42,11 +42,11 @@ func extractKeys(str string) []string {
 	return lstKeys
 }
 
-func fnInterpolateString(str string, vars map[string]interface{}) string {
+func interpolateString(str string, vars map[string]interface{}) string {
 	eval := func(strToInterpolate string) (string, error) {
 		lstKeys := extractKeys(strToInterpolate)
 		result := appendEval(strToInterpolate, lstKeys)
-		result = fnInterpolateString(result, vars)
+		result = interpolateString(result, vars)
 		return result, nil
 	}
 	funcMap := sprig.FuncMap()
@@ -63,24 +63,23 @@ func fnInterpolateString(str string, vars map[string]interface{}) string {
 	return tmplBytes.String()
 }
 
-
-func appendEval(str string, lstKeys []string) string{
+func appendEval(str string, lstKeys []string) string {
 	freq := make(map[string]int)
 	for _, key := range lstKeys {
 		freq[key] = freq[key] + 1
 	}
-	for key, value  := range freq {
+	for key, value := range freq {
 		pattern := fmt.Sprintf("{{[ ]+%s", key)
 		var re = regexp.MustCompile(pattern)
 		lstMatched := re.FindAllString(str, -1)
 		if len(lstMatched) > 0 {
 			match := lstMatched[0]
 			str = strings.Replace(str, match, fmt.Sprintf("%s | eval", match), value)
-		}else {
+		} else {
 			panic("there are a gost key")
 		}
 	}
-	return str 
+	return str
 }
 
 // // Given a string with the templates, it is interpolated with the value of the vars.
@@ -94,7 +93,7 @@ func Do(str string, vars map[string]interface{}) (string, error) {
 		if !flagAskToResolveInterpolation {
 			result = appendEval(result, lstKeys)
 		}
-		result = fnInterpolateString(result, vars)
+		result = interpolateString(result, vars)
 	}
 	return result, nil
 }
