@@ -45,11 +45,11 @@ func extractKeys(str string) []string {
 func interpolateString(str string, vars map[string]interface{}, mapResults map[string]interface{}) (string, error) {
 	eval := func(strToInterpolate string) (result string, err error) {
 		lstKeys := extractKeys(strToInterpolate)
-		if _, ok := mapResults[strToInterpolate]; ok{
-			return "", fmt.Errorf("error, cyclic interpolation. The string [%s] has been generated previopusly, keys:%v", strToInterpolate,lstKeys)
-		}else {
-			mapResults[strToInterpolate] = ""
-		}
+		//if _, ok := mapResults[strToInterpolate]; ok{
+		//	return "", fmt.Errorf("error, cyclic interpolation. The string [%s] has been generated previopusly, keys:%v", strToInterpolate,lstKeys)
+		//}
+		mapResults[strToInterpolate] = ""
+		
 		result = appendEval(strToInterpolate, lstKeys)
 		result, err = interpolateString(result, vars, mapResults)
 		return result, err
