@@ -42,25 +42,30 @@ func extractKeys(str string) []string {
 	return lstKeys
 }
 
-func interpolateString(str string, vars map[string]interface{}) string {
-	eval := func(strToInterpolate string) (string, error) {
+func interpolateString(str string, vars map[string]interface{}, mapResults map[string]interface{}) (string, error) {
+	eval := func(strToInterpolate string) (result string, err error) {
 		lstKeys := extractKeys(strToInterpolate)
-		result := appendEval(strToInterpolate, lstKeys)
-		result = interpolateString(result, vars)
-		return result, nil
+		if _, ok := mapResults[strToInterpolate]; ok{
+			return "", fmt.Errorf("error, cyclic interpolation. The string [%s] has been generated previopusly, keys:%v", strToInterpolate,lstKeys)
+		}else {
+			mapResults[strToInterpolate] = ""
+		}
+		result = appendEval(strToInterpolate, lstKeys)
+		result, err = interpolateString(result, vars, mapResults)
+		return result, err
 	}
 	funcMap := sprig.FuncMap()
 	funcMap["eval"] = eval
 	tmpl, err := template.New("template").Funcs(funcMap).Parse(str)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf ("error, parsing the next string %s:%v",str, err)
 	}
 	var tmplBytes bytes.Buffer
 	err = tmpl.Execute(&tmplBytes, vars)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf ("error, applying the values over the string %s:%v",str, err)
 	}
-	return tmplBytes.String()
+	return tmplBytes.String(), nil
 }
 
 func appendEval(str string, lstKeys []string) string {
@@ -83,9 +88,10 @@ func appendEval(str string, lstKeys []string) string {
 }
 
 // // Given a string with the templates, it is interpolated with the value of the vars.
-func Do(str string, vars map[string]interface{}) (string, error) {
-	result := str
+func Do(str string, vars map[string]interface{}) (result string, err error) {
+	result = str
 	flagAskToResolveInterpolation := false
+	mapResults := map[string]interface{}{}
 
 	for !flagAskToResolveInterpolation {
 		lstKeys := extractKeys(result)
@@ -93,7 +99,9 @@ func Do(str string, vars map[string]interface{}) (string, error) {
 		if !flagAskToResolveInterpolation {
 			result = appendEval(result, lstKeys)
 		}
-		result = interpolateString(result, vars)
+		result, err = interpolateString(result, vars, mapResults)
+		flagAskToResolveInterpolation = flagAskToResolveInterpolation || err != nil
+
 	}
-	return result, nil
+	return result, err
 }

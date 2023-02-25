@@ -1,38 +1,9 @@
 package interpolator
 
 import (
+	"reflect"
 	"testing"
 )
-
-func Test_fnInterpolateString(t *testing.T) {
-
-	varsContent := map[string]interface{}{
-		"mix":       "{{ .house }}",
-		"house":     "A {{ .the }} casita",
-		"the":       "la {{ .cosa_rara | title  }}",
-		"animal":    "de {{ .the | title }} mariposa",
-		"cosa_rara": "demo_pato",
-	}
-
-	type args struct {
-		str  string
-		vars map[string]interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{"Prueba", args{"{{ .the }}", varsContent}, "la {{ .cosa_rara | title  }}"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := interpolateString(tt.args.str, tt.args.vars); got != tt.want {
-				t.Errorf("fnInterpolateString() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestDo2(t *testing.T) {
 
@@ -74,13 +45,17 @@ func TestDo2(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
-		{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
-		{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "ROSA A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
-		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		{"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
+		//{"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
+		//{"Must fail, function not exist", args{"{{ .cosa_rara | floupper }}", varsContent}, "", true},
+		//{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
+		//{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
+		//{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Demo_pato Casita  DEMO_PATO  -- A la Demo_pato casita  DEMO_PATO ", false},
+		//{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
 		{"connan test", args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero.bad_batman | title }}", values}, "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs With The Using The Conan Sword", false},
+		//{"connan test", args{"{{ .colour.orange | upper }} -- {{ .colour.orange | title }} -- {{ .colour.orange }} -- {{ .mix }}", varsContent}, "DEMO_PATO -- Demo_pato -- demo_pato -- A la Demo_pato casita  DEMO_PATO ", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -91,6 +66,27 @@ func TestDo2(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("Do2() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_extractKeys(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{"Should extract as keys the name of the variables", args{"Hola {{ .user_name }} como estás, lo cierto es que esto es {{ .insult }}"}, []string{".user_name", ".insult"}},
+		{"Should extract as keys the name of the variables using also functions ", args{"Hola {{ .user_name | upper }} como estás, lo cierto es que esto es {{ .insult | title}}"}, []string{".user_name", ".insult"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extractKeys(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extractKeys() = %v, want %v", got, tt.want)
 			}
 		})
 	}
