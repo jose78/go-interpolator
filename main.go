@@ -60,6 +60,9 @@ func interpolateString(str string, vars map[string]interface{}, mapResults map[s
 	if err != nil {
 		return "", fmt.Errorf ("error, parsing the next string %s:%v",str, err)
 	}
+
+
+	tmpl.Option()
 	var tmplBytes bytes.Buffer
 	err = tmpl.Execute(&tmplBytes, vars)
 	if err != nil {
@@ -79,6 +82,7 @@ func appendEval(str string, lstKeys []string) string {
 		lstMatched := re.FindAllString(str, -1)
 		if len(lstMatched) > 0 {
 			match := lstMatched[0]
+			fmt.Printf("TODO: verificar si el valor asociado a este element es una list o un dict %s \n", match)
 			str = strings.Replace(str, match, fmt.Sprintf("%s | eval", match), value)
 		} else {
 			panic("there are a gost key")

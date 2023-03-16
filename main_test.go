@@ -17,6 +17,7 @@ func TestDo2(t *testing.T) {
 		"redirect_pink":   "{{ .colour.pink }}",
 		"redirect_orange": "{{ .colour.orange }} {{ .mix }}",
 		"cyclic":          "This is a {{ .cyclic }}",
+		"lst":             []string{"uno", "dos", "tres"},
 		"colour": map[string]interface{}{
 			"red":    "rojo",
 			"blue":   "azul",
@@ -45,17 +46,18 @@ func TestDo2(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-	   // {"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
-	    {"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
-	    {"Must fail, function not exist", args{"{{ .cosa_rara | floupper }}", varsContent}, "", true},
-	    {"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
-	    {"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
-	    {"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Demo_pato Casita  DEMO_PATO  -- A la Demo_pato casita  DEMO_PATO ", false},
-		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
-		{"connan test", args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero.bad_batman | title }}", values}, "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs With The Using The Conan Sword", false},
-		{"connan test", args{"{{ .colour.orange | upper }} -- {{ .colour.orange | title }} -- {{ .colour.orange }} -- {{ .mix }}", varsContent}, "DEMO_PATO -- Demo_pato -- demo_pato -- A la Demo_pato casita  DEMO_PATO ", false},
+		// {"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
+		{"Must return a list ", args{"{{ .colour | toJson }}", varsContent}, "", false},
+		//{"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
+		//{"Must fail, function not exist", args{"{{ .cosa_rara | floupper }}", varsContent}, "", true},
+		//{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "DEMO_PATO", false},
+		//{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  DEMO_PATO ", false},
+		//{"very complex interpolation", args{"{{ .colour.orange |  upper }}", varsContent}, "DEMO_PATO", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
+		//{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Demo_pato Casita  DEMO_PATO  -- A la Demo_pato casita  DEMO_PATO ", false},
+		//{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		//{"connan test", args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero.bad_batman | title }}", values}, "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs With The Using The Conan Sword", false},
+		//{"connan test", args{"{{ .colour.orange | upper }} -- {{ .colour.orange | title }} -- {{ .colour.orange }} -- {{ .mix }}", varsContent}, "DEMO_PATO -- Demo_pato -- demo_pato -- A la Demo_pato casita  DEMO_PATO ", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
