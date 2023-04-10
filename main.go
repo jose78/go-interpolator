@@ -31,6 +31,19 @@ import (
 	"github.com/Masterminds/sprig/v3"
 )
 
+// Given a prase, it extracts all parameters to be interpolated\. for instance, given "Hello I'm a {{ function_name .param_1 | function_name_2 }}  and test {{ function_name_3 .param_2 | function_name_3 }} " it should return an array with the items {{ function_name .param_1 | function_name_2 }} and {{ function_name_3 .param_2 | function_name_3 }}  
+func extractParamteres(str string) []string {
+	//var str = `{{ funcion .como "estas" | esto es una funcion | to_json }} esto es unba prueba {{ Hola_2 como estas  }}`
+	result := []string{}
+	re := regexp.MustCompile(EXTRACT_PARAMTERES)
+
+	for _, match := range re.FindAllString(str, -1) {
+		result = append(result, match)
+	}
+	return result
+}
+
+// Given a parameter, it retrieves the keys of the parameter. For instance, given {{ function_name .param_1 | function_name_2 }} it should return an array with the value of .param_1
 func extractKeys(str string) []string {
 	var replaceRegexPattern = regexp.MustCompile(`{{|\|(.*?)}}|\}}`)
 	var re = regexp.MustCompile(`{{[ ]*.([a-zA-Z\_\-|. ]*) [0-9a-zA-Z \[\],.]*[ ]*}}`)
