@@ -46,6 +46,7 @@ func extractParamteres(str string) []string {
 }
 
 type parameter struct {
+	OriginalStr        string
 	Paramter           string
 	FirstItem          string
 	Function           string
@@ -64,11 +65,12 @@ func extractKeys(str string) parameter {
 		})
 	}
 	var flagContainsJson bool
+	originalStr := str
 	str, flagContainsJson = appensJsonContent(str)
 	str = replacePipesInQuotes(str)
 	strSplited := strings.Split(str, "|")
 
-	var re = regexp.MustCompile(`\s*(\.\w+)\s*`)
+	var re = regexp.MustCompile(EXTRACT_KEYS)
 	lstKeys := []string{}
 	for _, match := range re.FindAllString(strSplited[0], -1) {
 		lstKeys = append(lstKeys, strings.TrimSpace(match))
@@ -79,7 +81,7 @@ func extractKeys(str string) parameter {
 		functionName = strings.Split(strSplited[0][2:], " ")[0]
 	}
 
-	return parameter{str, strSplited[0], functionName, flagContainsJson, lstKeys}
+	return parameter{originalStr, str, strSplited[0], functionName, flagContainsJson, lstKeys}
 }
 
 // Given a parameter it check if the function to_json is contained at last position, if not then it will append.
@@ -101,6 +103,7 @@ func appensJsonContent(str string) (result string, flagContainsJson bool) {
 
 const (
 	EXTRACT_PARAMTERES = `(?m){{\s* ([a-zA-Z0-9."'|_-]* )+\s*}}`
+	EXTRACT_KEYS       = `(?m)\s*(\.[a-zA-Z0-1\._-]+)\s*`
 	TO_JSON            = "toJson"
 )
 
@@ -108,28 +111,44 @@ func Do2(str string, vars map[string]interface{}) (result interface{}, err error
 
 	parameters := extractParamteres(str)
 
-	//if len(parameters) == 1 {
+	if len(parameters) == 1 {
 		parameter := extractKeys(parameters[0])
-		return execute(parameter, vars)
-		// verificar si aparte del parámetro hay máß cosas... si las hay habría que meterlas 
-	//} else {
-//
-	//	for _, param := range parameters {
-	//		parameter := extractKeys(param)
-//
-	//	}
-	//}
-	//fmt.Println(parameters)
-	//return
+		result, err = execute(parameter, vars)
+		if reflect.TypeOf(result).Name() == "string" ||
+			len(strings.TrimSpace(strings.Replace(str, parameter.OriginalStr, "", -1))) != 0 {
+			result = strings.Replace(str, parameter.OriginalStr, result.(string), 1)
+		}
+
+		return result, err
+		// verificar si aparte del parámetro hay máß cosas... si las hay habría que meterlas
+	} else {
+
+		for _, param := range parameters {
+			parameter := extractKeys(param)
+			result, err = execute(parameter, vars)
+			if err != nil {
+				return nil, fmt.Errorf("error, executing the interpolation of %s: %v", parameter.Paramter, err)
+			}
+			str = strings.Replace(str, parameter.OriginalStr, result.(string), 1)
+		}
+		result = str
+	}
+	fmt.Println(parameters)
+	return
 }
 
 func execute(param parameter, vars map[string]interface{}) (interface{}, error) {
+
+	mainStr := param.Paramter
+	for _, item := range param.Keys {
+		mainStr = strings.Replace(mainStr, item, fmt.Sprintf(" ( %s | eval) ", item), 1)
+	}
 
 	eval := func(strToInterpolate interface{}) (result interface{}, err error) {
 		if reflect.TypeOf(strToInterpolate).Name() == "string" {
 			lstKeys := extractKeys(strToInterpolate.(string))
 			if len(lstKeys.Keys) > 0 {
-				Do2(strToInterpolate.(string), vars)
+				return Do2(strToInterpolate.(string), vars)
 			}
 		}
 		return strToInterpolate, err
@@ -137,11 +156,6 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 
 	funcMap := sprig.FuncMap()
 	funcMap["eval"] = eval
-
-	mainStr := param.Paramter
-	for _, item := range param.Keys {
-		mainStr = strings.Replace(mainStr, item, fmt.Sprintf(" ( %s | eval) ", item), 1)
-	}
 
 	tmpl, err := template.New("template").Funcs(funcMap).Parse(mainStr)
 	if err != nil {
@@ -153,13 +167,12 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 		return "", fmt.Errorf("error, applying the values over the string %s:%v", mainStr, err)
 	}
 
-
 	var result interface{} = tmplBytes.String()
 
-	if ! param.FlagContainsToJson {
-		
-		json.Unmarshal( tmplBytes.Bytes() , &result)
-	} 
+	if !param.FlagContainsToJson {
+
+		json.Unmarshal(tmplBytes.Bytes(), &result)
+	}
 
 	return result, nil
 
