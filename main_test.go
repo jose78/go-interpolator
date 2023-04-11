@@ -45,7 +45,7 @@ func TestDo2(t *testing.T) {
 		want    interface{}
 		wantErr bool
 	}{
-		{"Must check the function", args{"{{ eq .cosa_rara   'DEMO_PATO' }}", varsContent}, false, true},
+		{"Must check the function", args{`{{ eq .the   "DEMO_PATO" }}`, varsContent}, false, false},
 		// {"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
 		//{"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
 		//{"Must fail, function not exist", args{"{{ .cosa_rara | floupper }}", varsContent}, "", true},
@@ -81,9 +81,9 @@ func Test_extractKeys(t *testing.T) {
 		args args
 		want []string
 	}{
-		{"Should extract as keys the name of the variables", args{"Hola {{ .user_name }} como estás, lo cierto es que esto es {{ .insult }}"}, []string{".user_name", ".insult"}},
-		{"Should extract as keys the name of the variables using also functions ", args{"Hola {{ .user_name | upper }} como estás, lo cierto es que esto es {{ .insult | title}}"}, []string{".user_name", ".insult"}},
-		{"Should extract as keys the name of the variables using also functions ", args{"sdasd {{ title .insult | tesss  }} sdada"}, []string{".user_name", ".insult"}},
+		//{"Should extract as keys the name of the variables", args{"Hola {{ .user_name }} como estás, lo cierto es que esto es {{ .insult }}"}, []string{".user_name", ".insult"}},
+		//{"Should extract as keys the name of the variables using also functions ", args{"Hola {{ .user_name | upper }} como estás, lo cierto es que esto es {{ .insult | title}}"}, []string{".user_name", ".insult"}},
+		{"Should extract as keys the name of the variables using also functions ", args{`title .insult "hola | | | ma, nsdsds" | tesss`}, []string{".user_name", ".insult"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
