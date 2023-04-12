@@ -102,11 +102,11 @@ func Test_extractKeys(t *testing.T) {
 	}{
 		//{"Should extract as keys the name of the variables", args{"Hola {{ .user_name }} como estás, lo cierto es que esto es {{ .insult }}"}, []string{".user_name", ".insult"}},
 		//{"Should extract as keys the name of the variables using also functions ", args{"Hola {{ .user_name | upper }} como estás, lo cierto es que esto es {{ .insult | title}}"}, []string{".user_name", ".insult"}},
-		{"Should extract as keys the name of the variables using also functions ", args{`title .insult "hola | | | ma, nsdsds" | tesss`}, []string{".user_name", ".insult"}},
+		{"Should extract as keys the name of the variables using also functions ", args{`title .insult "hola | | | ma, nsdsds" | tesss`}, []string{ ".insult"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := extractKeys(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+			if got := extractKeys(tt.args.str); !reflect.DeepEqual(got.Keys, tt.want) {
 				t.Errorf("extractKeys() = %v, want %v", got, tt.want)
 			}
 		})
@@ -123,8 +123,8 @@ func Test_appensJsonContent(t *testing.T) {
 		wantResult           string
 		wantFlagContainsJson bool
 	}{
-		{"Should return the same string with true flag ", args{"{{ funcion .como  | estoesunafuncion | to_json }}"}, " funcion .como  | estoesunafuncion | to_json ", true},
-		{"Should return the same string with true flag ", args{"{{ funcion .como  | estoesunafuncion }}"}, " funcion .como  | estoesunafuncion  | to_json ", false},
+		{"Should return the same string with true flag ", args{"{{ funcion .como  | estoesunafuncion | toJson }}"}, "{{ funcion .como  | estoesunafuncion | toJson }}", true},
+		{"Should return same string with the sufix of '| toJson ' with false flag ", args{"{{ funcion .como  | estoesunafuncion }}"}, "{{ funcion .como  | estoesunafuncion  | toJson }}", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,7 +148,7 @@ func Test_extractParamteres(t *testing.T) {
 		args args
 		want []string
 	}{
-		{"extract the parameters contained within the string", args{`para empezar esto {{ funcion .como  | estoesunafuncion | to_json }} esto es unba prueba {{ Hola_2 como estas  }}`}, []string{"{{ funcion .como  | estoesunafuncion | to_json }}", "{{ Hola_2 como estas  }}"}},
+		{"extract the parameters contained within the string", args{`para empezar esto {{ funcion .como  | estoesunafuncion | toJson }} esto es unba prueba {{ Hola_2 como estas  }}`}, []string{"{{ funcion .como  | estoesunafuncion | toJson }}", "{{ Hola_2 como estas  }}"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

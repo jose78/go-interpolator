@@ -49,7 +49,6 @@ type parameter struct {
 	OriginalStr        string
 	Paramter           string
 	FirstItem          string
-	Function           string
 	FlagContainsToJson bool
 	Keys               []string
 }
@@ -76,12 +75,9 @@ func extractKeys(str string) parameter {
 		lstKeys = append(lstKeys, strings.TrimSpace(match))
 	}
 
-	functionName := ""
-	if strings.Contains(strSplited[0], " ") {
-		functionName = strings.Split(strSplited[0][2:], " ")[0]
-	}
 
-	return parameter{originalStr, str, strSplited[0], functionName, flagContainsJson, lstKeys}
+
+	return parameter{originalStr, str, strSplited[0], flagContainsJson, lstKeys}
 }
 
 // Given a parameter it check if the function to_json is contained at last position, if not then it will append.
@@ -96,6 +92,8 @@ func appensJsonContent(str string) (result string, flagContainsJson bool) {
 
 	if !flagContainsJson {
 		result = fmt.Sprintf("{{%s | %s }}", result, TO_JSON)
+	} else {
+		result = fmt.Sprintf("{{%s}}", result)
 	}
 
 	return
