@@ -23,7 +23,9 @@ package interpolator
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
@@ -31,34 +33,126 @@ import (
 	"github.com/Masterminds/sprig/v3"
 )
 
-func extractKeys(str string) []string {
-	var replaceRegexPattern = regexp.MustCompile(`{{|\|(.*?)}}|\}}`)
-	var re = regexp.MustCompile(`{{[ ]*.([a-zA-Z\_\-|. ]*) [0-9a-zA-Z \[\],.]*[ ]*}}`)
-	lstKeys := []string{}
-	for _, match := range re.FindAllString(str, -1) {
-		keyStracted := replaceRegexPattern.ReplaceAllString(match, "")
-		lstKeys = append(lstKeys, strings.TrimSpace(keyStracted))
-	}
-	return lstKeys
+const (
+	EXTRACT_PARAMTERES = `(?m){{\s* ([a-zA-Z0-9."'|_-]* )+\s*}}`
+	EXTRACT_KEYS       = `(?m)\s*(\.[a-zA-Z0-1\._-]+)\s*`
+	TO_JSON            = "toJson"
+)
+
+type parameter struct {
+	originalStr        string
+	paramter           string
+	FlagContainsToJson bool
+	Keys               []string
 }
 
-func interpolateString(str string, vars map[string]interface{}, mapResults map[string]interface{}) (string, error) {
-	eval := func(strToInterpolate string) (result string, err error) {
-		lstKeys := extractKeys(strToInterpolate)
-		//if _, ok := mapResults[strToInterpolate]; ok{
-		//	return "", fmt.Errorf("error, cyclic interpolation. The string [%s] has been generated previopusly, keys:%v", strToInterpolate,lstKeys)
-		//}
-		mapResults[strToInterpolate] = ""
-		
-		result = appendEval(strToInterpolate, lstKeys)
-		result, err = interpolateString(result, vars, mapResults)
-		return result, err
+// Given a prase, it extracts all parameters to be interpolated\. for instance, given "Hello I'm a {{ function_name .param_1 | function_name_2 }}  and test {{ function_name_3 .param_2 | function_name_3 }} " it should return an array with the items {{ function_name .param_1 | function_name_2 }} and {{ function_name_3 .param_2 | function_name_3 }}
+func extractParamteres(str string) []string {
+	result := []string{}
+	re := regexp.MustCompile(EXTRACT_PARAMTERES)
+	result = append(result, re.FindAllString(str, -1)...)
+	return result
+}
+
+// Given a parameter, it retrieves the keys of the parameter. For instance, given {{ function_name .param_1 | function_name_2 }} it should return an array with the value of .param_1
+func extractKeys(str string) parameter {
+
+	replacePipesInQuotes := func(input string) string {
+		re := regexp.MustCompile(`"([^"\\]*(?:\\.[^"\\]*)*)"`)
+		return re.ReplaceAllStringFunc(input, func(s string) string {
+			result := strings.ReplaceAll(s, ",", "_______________COMMA_______________")
+			return strings.ReplaceAll(result, "|", "_______________PIPE_______________")
+		})
 	}
+	var flagContainsJson bool
+	originalStr := str
+	str, flagContainsJson = appensJsonContent(str)
+	str = replacePipesInQuotes(str)
+	strSplited := strings.Split(str, "|")
+
+	var re = regexp.MustCompile(EXTRACT_KEYS)
+	lstKeys := []string{}
+	for _, match := range re.FindAllString(strSplited[0], -1) {
+		lstKeys = append(lstKeys, strings.TrimSpace(match))
+	}
+
+	return parameter{originalStr, str, flagContainsJson, lstKeys}
+}
+
+// Given a parameter it check if the function to_json is contained at last position, if not then it will append.
+func appensJsonContent(str string) (result string, flagContainsJson bool) {
+
+	result = str[2 : len(str)-2]
+	resultSplited := strings.Split(result, "|")
+
+	lastItem := resultSplited[len(resultSplited)-1]
+
+	flagContainsJson = strings.TrimSpace(lastItem) == TO_JSON
+
+	if !flagContainsJson {
+		result = fmt.Sprintf("{{%s | %s }}", result, TO_JSON)
+	} else {
+		result = fmt.Sprintf("{{%s}}", result)
+	}
+
+	return
+}
+
+func Do(str string, vars map[string]interface{}) (result interface{}, err error) {
+
+	parameters := extractParamteres(str)
+
+	if len(parameters) == 1 {
+		parameter := extractKeys(parameters[0])
+		result, err = execute(parameter, vars)
+		if reflect.TypeOf(result).Name() == "string" ||
+			len(strings.TrimSpace(strings.Replace(str, parameter.originalStr, "", -1))) != 0 {
+			result = strings.Replace(str, parameter.originalStr, result.(string), 1)
+		}
+
+		return result, err
+		// verificar si aparte del parámetro hay máß cosas... si las hay habría que meterlas
+	} else {
+
+		for _, param := range parameters {
+			parameter := extractKeys(param)
+			result, err = execute(parameter, vars)
+			if err != nil {
+				return nil, fmt.Errorf("error, executing the interpolation of %s: %v", parameter.paramter, err)
+			}
+			str = strings.Replace(str, parameter.originalStr, result.(string), 1)
+		}
+		result = str
+	}
+	fmt.Println(parameters)
+	return
+}
+
+
+
+func execute(param parameter, vars map[string]interface{}) (interface{}, error) {
+
+	mainStr := param.paramter
+	for _, item := range param.Keys {
+		mainStr = strings.Replace(mainStr, item, fmt.Sprintf(" ( %s | eval) ", item), 1)
+	}
+
+	eval := func(strToInterpolate interface{}) (result interface{}, err error) {
+		if reflect.TypeOf(strToInterpolate).Name() == "string" {
+			lstKeys := extractKeys(strToInterpolate.(string))
+			if len(lstKeys.Keys) > 0 {
+				return Do(strToInterpolate.(string), vars)
+			}
+		}
+		return strToInterpolate, err
+	}
+
 	funcMap := sprig.FuncMap()
 	funcMap["eval"] = eval
-	tmpl, err := template.New("template").Funcs(funcMap).Parse(str)
+
+	tmpl, err := template.New("template").Funcs(funcMap).Parse(mainStr)
 	if err != nil {
-		return "", fmt.Errorf ("error, parsing the next string %s:%v",str, err)
+		return "", fmt.Errorf("error, parsing the next string %s:%v", mainStr, err)
 	}
 
 
@@ -66,46 +160,16 @@ func interpolateString(str string, vars map[string]interface{}, mapResults map[s
 	var tmplBytes bytes.Buffer
 	err = tmpl.Execute(&tmplBytes, vars)
 	if err != nil {
-		return "", fmt.Errorf ("error, applying the values over the string %s:%v",str, err)
+		return "", fmt.Errorf("error, applying the values over the string %s:%v", mainStr, err)
 	}
-	return tmplBytes.String(), nil
-}
 
-func appendEval(str string, lstKeys []string) string {
-	freq := make(map[string]int)
-	for _, key := range lstKeys {
-		freq[key] = freq[key] + 1
+	var result interface{} = tmplBytes.String()
+
+	if !param.FlagContainsToJson {
+
+		json.Unmarshal(tmplBytes.Bytes(), &result)
 	}
-	for key, value := range freq {
-		pattern := fmt.Sprintf("{{[ ]+%s", key)
-		var re = regexp.MustCompile(pattern)
-		lstMatched := re.FindAllString(str, -1)
-		if len(lstMatched) > 0 {
-			match := lstMatched[0]
-			fmt.Printf("TODO: verificar si el valor asociado a este element es una list o un dict %s \n", match)
-			str = strings.Replace(str, match, fmt.Sprintf("%s | eval", match), value)
-		} else {
-			panic("there are a gost key")
-		}
-	}
-	return str
-}
 
-// // Given a string with the templates, it is interpolated with the value of the vars.
-func Do(str string, vars map[string]interface{}) (result string, err error) {
-	result = str
-	flagAskToResolveInterpolation := false
-	mapResults := map[string]interface{}{}
+	return result, nil
 
-	for !flagAskToResolveInterpolation {
-		lstKeys := extractKeys(result)
-		flagAskToResolveInterpolation = len(lstKeys) == 0
-		if !flagAskToResolveInterpolation {
-			result = appendEval(result, lstKeys)
-		}
-		result, err = interpolateString(result, vars, mapResults)
-		flagAskToResolveInterpolation = flagAskToResolveInterpolation || err != nil
-
-	}
-	return result, err
 }
