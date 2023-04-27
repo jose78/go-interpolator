@@ -82,7 +82,14 @@ func extractKeys(str string) parameter {
 // Given a parameter it check if the function to_json is contained at last position, if not then it will append.
 func appensJsonContent(str string) (result string, flagContainsJson bool) {
 
-	result = str[2 : len(str)-2]
+	result = str
+	if strings.HasPrefix(str, "{{"){
+		result = str[2 : len(str)-2]
+	} else {
+		if ! strings.HasPrefix(strings.TrimSpace(str), "."){
+			result = fmt.Sprintf("\"%s\""  , str)
+		}
+	}
 	resultSplited := strings.Split(result, "|")
 
 	lastItem := resultSplited[len(resultSplited)-1]
