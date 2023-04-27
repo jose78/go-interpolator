@@ -66,7 +66,7 @@ func TestDo2(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Do2(tt.args.str, tt.args.vars)
+			got, err := Do(tt.args.str, tt.args.vars)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Do2() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -102,7 +102,7 @@ func Test_extractKeys(t *testing.T) {
 	}{
 		//{"Should extract as keys the name of the variables", args{"Hola {{ .user_name }} como estás, lo cierto es que esto es {{ .insult }}"}, []string{".user_name", ".insult"}},
 		//{"Should extract as keys the name of the variables using also functions ", args{"Hola {{ .user_name | upper }} como estás, lo cierto es que esto es {{ .insult | title}}"}, []string{".user_name", ".insult"}},
-		{"Should extract as keys the name of the variables using also functions ", args{`title .insult "hola | | | ma, nsdsds" | tesss`}, []string{ ".insult"}},
+		{"Should extract as keys the name of the variables using also functions ", args{`title .insult "hola | | | ma, nsdsds" | tesss`}, []string{".insult"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
