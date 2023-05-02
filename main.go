@@ -131,7 +131,6 @@ func Do(str string, vars map[string]interface{}) (result interface{}, err error)
 		}
 		result = str
 	}
-	fmt.Println(parameters)
 	return
 }
 
