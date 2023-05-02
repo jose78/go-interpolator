@@ -35,7 +35,7 @@ import (
 
 const (
 	EXTRACT_PARAMTERES = `(?m){{\s* ([a-zA-Z0-9."'|_-]* )+\s*}}`
-	EXTRACT_KEYS       = `(?m)\s*(\.[a-zA-Z0-1\._-]+)\s*`
+	EXTRACT_KEYS       = `(?m)\s*(\.[a-zA-Z0-9\._-]+)\s*`
 	TO_JSON            = "toJson"
 )
 

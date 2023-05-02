@@ -15,6 +15,7 @@ func TestDo2(t *testing.T) {
 	}
 	lst := []string{"uno", "dos", "tres"}
 	varsContent := map[string]interface{}{
+		"the_222":         "la {{ .cosa_rara | title  }}",
 		"mix":             "{{ .house }}  {{ .cosa_rara | upper  }} ",
 		"house":           "A {{ .the }} casita",
 		"the":             "la {{ .cosa_rara | title  }}",
@@ -53,13 +54,14 @@ func TestDo2(t *testing.T) {
 		want    interface{}
 		wantErr bool
 	}{
+		{"Must evaluate correctly the key", args{`{{ .the_222  }}`, varsContent}, false, false},
 		{"Must check the function", args{`{{ eq .the   "DEMO_PATO" }}`, varsContent}, false, false},
 		////{"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
 		{"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
 		{"Must return a simple value", args{"{{ .cosa_rara }}", varsContent}, "uno", false},
 		{"Must fail, function not exist", args{"{{ .cosa_rara | floupper }}", varsContent}, "", true},
 		{"simple interpolation", args{"{{ .cosa_rara | upper }}", varsContent}, "UNO", false},
-		{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Demo_pato casita  UNO ", false},
+		{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Uno casita  UNO ", false},
 		{"very complex interpolation", args{"{{ .colour }}", varsContent}, colorsContent, false},
 		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
 		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Demo_pato Casita  UNO  -- A la Uno casita  DEMO_PATO ", false},
