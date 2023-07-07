@@ -25,10 +25,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
 )
@@ -83,11 +85,11 @@ func extractKeys(str string) parameter {
 func appensJsonContent(str string) (result string, flagContainsJson bool) {
 
 	result = str
-	if strings.HasPrefix(str, "{{"){
+	if strings.HasPrefix(str, "{{") {
 		result = str[2 : len(str)-2]
 	} else {
-		if ! strings.HasPrefix(strings.TrimSpace(str), "."){
-			result = fmt.Sprintf("\"%s\""  , str)
+		if !strings.HasPrefix(strings.TrimSpace(str), ".") {
+			result = fmt.Sprintf("\"%s\"", str)
 		}
 	}
 	resultSplited := strings.Split(result, "|")
@@ -134,7 +136,17 @@ func Do(str string, vars map[string]interface{}) (result interface{}, err error)
 	return
 }
 
-
+func generateName() string {
+	rand.Seed(time.Now().UnixNano())
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, 15)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	str := "template_"+string(b)
+	fmt.Printf("Template %s generate", str)
+	return str
+}
 
 func execute(param parameter, vars map[string]interface{}) (interface{}, error) {
 
@@ -156,11 +168,10 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 	funcMap := sprig.FuncMap()
 	funcMap["eval"] = eval
 
-	tmpl, err := template.New("template").Funcs(funcMap).Parse(mainStr)
+	tmpl, err := template.New(generateName()).Funcs(funcMap).Parse(mainStr)
 	if err != nil {
 		return "", fmt.Errorf("error, parsing the next string %s:%v", mainStr, err)
 	}
-
 
 	tmpl.Option()
 	var tmplBytes bytes.Buffer
