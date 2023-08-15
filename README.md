@@ -8,7 +8,7 @@ The _interpolator_ project is part as _judoDSL_, the main goal of _interpolator_
 To install the dependency:
 
 ```bash
-go get -u github.com/judoDSL/interpolator
+go get -u github.com/judoctl/interpolator
 ```
 
 ## How-to use:
@@ -18,7 +18,7 @@ You can see an example about how to use it.
 ```go
 package main
 
-import "github.com/judoDSL/interpolator"
+import "github.com/judoctl/interpolator"
 
 func main () {
 	values := make(map[string] interface{})

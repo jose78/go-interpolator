@@ -4,7 +4,7 @@ it is an example ahout how to use it:
 
 	package main
 
-	import "github.com/judoDSL/interpolator"
+	import "github.com/judoctl/interpolator"
 
 	func main () {
 		values := make(map[string] interface{})
@@ -143,7 +143,7 @@ func generateName() string {
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
-	str := "template_"+string(b)
+	str := "template_" + string(b)
 	fmt.Printf("Template %s generate", str)
 	return str
 }
