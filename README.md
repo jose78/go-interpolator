@@ -29,9 +29,8 @@ func main () {
 	
     customFuncMap := func() template.FuncMap  {
 		return sprig.FuncMap()
-	}
-
-	runner := Configure(Configuration{FnProviderFunction: customFuncMap })
+    }
+    runner := Configure(Configuration{FnProviderFunction: customFuncMap })
 
     values := make(map[string] interface{})
 	values["name"] = "            Jose                 "
@@ -45,8 +44,6 @@ func main () {
 	fmt.Print(str)
 }
 ```
-
-
 
 
 The result of this execution is:
