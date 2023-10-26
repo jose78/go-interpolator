@@ -1,6 +1,6 @@
 # interpolator
 
-The _interpolator_ project is part as _judoctl.sh_, the main goal of _interpolator_ is to help you to interpolate your _**nested vars**_ inside the string and evaluate functions related with this vars. It has been implemented to use 'go templates'  and to be highly configurable, enabling you to incorporate your own functions or third parties, like [Sprig Functions Project](https://masterminds.github.io/sprig/).
+The _interpolator_ project is part as _judoctl.sh_, the main goal of _interpolator_ is to help you to interpolate your _**nested vars**_ inside the string and evaluate functions related with this vars. It has been implemented to use 'go templates'  and to be highly configurable, enabling you to incorporate your own functions or 3rd parties, like [Sprig Functions Project](https://masterminds.github.io/sprig/).
 
 
 ## How-to install:
