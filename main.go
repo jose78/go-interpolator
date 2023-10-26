@@ -31,8 +31,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/Masterminds/sprig/v3"
 )
 
 const (
@@ -41,6 +39,9 @@ const (
 	TO_JSON            = "toJson"
 )
 
+var (
+	funcMap = getFunctions
+)
 type parameter struct {
 	originalStr        string
 	paramter           string
@@ -165,10 +166,10 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 		return strToInterpolate, err
 	}
 
-	funcMap := sprig.FuncMap()
-	funcMap["eval"] = eval
+	lstFunctionsMapp := funcMap()
+	lstFunctionsMapp["eval"] = eval
 
-	tmpl, err := template.New(generateName()).Funcs(funcMap).Parse(mainStr)
+	tmpl, err := template.New(generateName()).Funcs(lstFunctionsMapp).Parse(mainStr)
 	if err != nil {
 		return "", fmt.Errorf("error, parsing the next string %s:%v", mainStr, err)
 	}
@@ -189,4 +190,31 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 
 	return result, nil
 
+}
+
+
+type typeValidateFunc func(str string, vars map[string]interface{}) (result interface{}, err error)
+
+// Type of function getFunctions, to use your custom functions
+type TypeProviderFunctions func() template.FuncMap   
+
+// Data to overwrithe the default behavior, it must be set through the configuration function
+type Configuration struct {
+	FnProviderFunction    TypeProviderFunctions // Update the list of functions to be used within the templates
+}
+
+
+// Configure optional values of struts_validation:
+// funcMap: Function to set de defailt list of funcMap to be used during the template process.
+func Configure(conf Configuration) typeValidateFunc {
+	if conf.FnProviderFunction != nil {
+		funcMap = conf.FnProviderFunction
+	}
+	return Do
+}
+
+// Generate the default empty funcMaps to be used
+func getFunctions() template.FuncMap {
+	fnMap := template.FuncMap{}
+	return fnMap
 }

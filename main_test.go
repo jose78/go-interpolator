@@ -1,11 +1,23 @@
 package interpolator
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
+	"text/template"
+
+	sprig "github.com/Masterminds/sprig/v3"
 )
 
 func TestDo2(t *testing.T) {
+
+	customFuncMap := func() template.FuncMap  {
+		return sprig.FuncMap()
+	}
+
+
+	runner := Configure(Configuration{FnProviderFunction: customFuncMap })
+
 
 	colorsContent := map[string]interface{}{
 		"red":    "rojo",
@@ -54,7 +66,7 @@ func TestDo2(t *testing.T) {
 		want    interface{}
 		wantErr bool
 	}{
-		{"Must evaluate correctly the key", args{`{{ .the_222  }}`, varsContent}, false, false},
+		{"Must evaluate correctly the key", args{`{{ .the_222  }}`, varsContent}, "la Uno", false},
 		{"Must check the function", args{`{{ eq .the   "DEMO_PATO" }}`, varsContent}, false, false},
 		////{"Must fail, cyclic", args{"{{ .cyclic | upper }}", varsContent}, "", true},
 		{"Must fail, key without dot", args{"{{ cosa_rara | upper }}", varsContent}, "", true},
@@ -64,14 +76,14 @@ func TestDo2(t *testing.T) {
 		{"medium complex interpolation", args{"{{ .mix }}", varsContent}, "A la Uno casita  UNO ", false},
 		{"very complex interpolation", args{"{{ .colour }}", varsContent}, colorsContent, false},
 		{"another very complex interpolation", args{"{{ .redirect_pink | upper }}", varsContent}, "ROSA", false},
-		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Demo_pato Casita  UNO  -- A la Uno casita  DEMO_PATO ", false},
-		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA DEMO_PATO CASITA  DEMO_PATO  A La Demo_pato Casita  DEMO_PATO  A la Demo_pato casita  DEMO_PATO ", false},
+		{"another very complex interpolation", args{"{{ .redirect_pink | upper }} -- {{ .mix | title }} -- {{ .mix }}", varsContent}, "ROSA -- A La Uno Casita  UNO  -- A la Uno casita  UNO ", false},
+		{"another very complex interpolation", args{"{{ .redirect_orange | upper }} {{ .mix | title }} {{ .mix }}", varsContent}, "DEMO_PATO A LA UNO CASITA  UNO  A La Uno Casita  UNO  A la Uno casita  UNO ", false},
 		{"connan test", args{"I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero.bad_batman | title }}", values}, "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with Batman Who Laughs With The Using The Conan Sword", false},
-		{"connan test", args{"{{ .colour.orange | upper }} -- {{ .colour.orange | title }} -- {{ .colour.orange }} -- {{ .mix }}", varsContent}, "DEMO_PATO -- Demo_pato -- demo_pato -- A la Demo_pato casita  DEMO_PATO ", false},
+		{"connan test", args{"{{ .colour.orange | upper }} -- {{ .colour.orange | title }} -- {{ .colour.orange }} -- {{ .mix }}", varsContent}, "DEMO_PATO -- Demo_pato -- demo_pato -- A la Uno casita  UNO ", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Do(tt.args.str, tt.args.vars)
+			got, err := runner(tt.args.str, tt.args.vars)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Do2() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -90,7 +102,7 @@ func TestDo2(t *testing.T) {
 			}
 
 			if !flagEq {
-				t.Errorf("Do2() = %v, want %v", got, tt.want)
+				t.Errorf("Do() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -163,3 +175,28 @@ func Test_extractParamteres(t *testing.T) {
 		})
 	}
 }
+
+
+func Test_SuperHero(t *testing.T){
+	customFuncMap := func() template.FuncMap  {
+		return sprig.FuncMap()
+	}
+
+	runner := Configure(Configuration{FnProviderFunction: customFuncMap })
+
+    values := make(map[string] interface{})
+	values["name"] = "            Jose                 "
+	values["main_topic"] = "restore the snyderverse"
+	values["hero"] = "{{ .hero_redirect }}"
+	values["favorite_superhero"] = "{{ .hero | upper }} who laughs"
+	values["hero_redirect"] = "batman"
+	str, _ := runner("I'm {{ .name | trim }} and I want to {{ .main_topic | upper  }} because I would like to see a film related with {{ .favorite_superhero | title }}", values)
+
+	resultExpected := "I'm Jose and I want to RESTORE THE SNYDERVERSE because I would like to see a film related with BATMAN Who Laughs"
+	if str != resultExpected{
+		t.Errorf("extractParamteres() = %v, want %v", str, resultExpected)
+	}
+
+	fmt.Println(str)
+}
+
