@@ -1,4 +1,4 @@
-module github.com/judoctl/interpolator/v3
+module github.com/judoctl/interpolator
 
 go 1.19
 
@@ -14,6 +14,5 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
-	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	golang.org/x/crypto v0.3.0 // indirect
 )
