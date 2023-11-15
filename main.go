@@ -145,7 +145,6 @@ func generateName() string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	str := "template_" + string(b)
-	fmt.Printf("Template %s generate", str)
 	return str
 }
 
