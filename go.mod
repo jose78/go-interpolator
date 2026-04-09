@@ -1,4 +1,4 @@
-module github.com/judoctl/interpolator
+module github.com/jose78/interpolator
 
 go 1.19
 
