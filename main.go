@@ -42,6 +42,7 @@ const (
 var (
 	funcMap = getFunctions
 )
+
 type parameter struct {
 	originalStr        string
 	paramter           string
@@ -58,15 +59,15 @@ func extractParamteres(str string) []string {
 }
 
 // Given a parameter, it retrieves the keys of the parameter. For instance, given {{ function_name .param_1 | function_name_2 }} it should return an array with the value of .param_1
-func extractKeys(str string) parameter {
+func replacePipesInQuotes(input string) string {
+	re := regexp.MustCompile(`"([^"\\]*(?:\\.[^"\\]*)*)"`)
+	return re.ReplaceAllStringFunc(input, func(s string) string {
+		result := strings.ReplaceAll(s, ",", "_______________COMMA_______________")
+		return strings.ReplaceAll(result, "|", "_______________PIPE_______________")
+	})
+}
 
-	replacePipesInQuotes := func(input string) string {
-		re := regexp.MustCompile(`"([^"\\]*(?:\\.[^"\\]*)*)"`)
-		return re.ReplaceAllStringFunc(input, func(s string) string {
-			result := strings.ReplaceAll(s, ",", "_______________COMMA_______________")
-			return strings.ReplaceAll(result, "|", "_______________PIPE_______________")
-		})
-	}
+func extractKeys(str string) parameter {
 	var flagContainsJson bool
 	originalStr := str
 	str, flagContainsJson = appensJsonContent(str)
@@ -80,6 +81,62 @@ func extractKeys(str string) parameter {
 	}
 
 	return parameter{originalStr, str, flagContainsJson, lstKeys}
+}
+
+func isSingleTemplateExpression(str string) bool {
+	trimmed := strings.TrimSpace(str)
+	if !strings.HasPrefix(trimmed, "{{") || !strings.HasSuffix(trimmed, "}}") {
+		return false
+	}
+	params := extractParamteres(trimmed)
+	return len(params) == 1 && strings.TrimSpace(params[0]) == trimmed
+}
+
+func wrapTemplateKeysWithEval(str string) string {
+	reAction := regexp.MustCompile(`{{[^}]*}}`)
+	reKey := regexp.MustCompile(`\.(?:[a-zA-Z0-9\._-]+)?`)
+	return reAction.ReplaceAllStringFunc(str, func(action string) string {
+		body := action[2 : len(action)-2]
+		body = replacePipesInQuotes(body)
+		body = reKey.ReplaceAllStringFunc(body, func(match string) string {
+			return fmt.Sprintf("( %s | eval )", match)
+		})
+		body = strings.ReplaceAll(body, "_______________COMMA_______________", ",")
+		body = strings.ReplaceAll(body, "_______________PIPE_______________", "|")
+		return "{{" + body + "}}"
+	})
+}
+
+func executeFullTemplate(str string, vars map[string]interface{}) (string, error) {
+	mainStr := wrapTemplateKeysWithEval(str)
+	eval := func(strToInterpolate interface{}) (result interface{}, err error) {
+		if strToInterpolate == nil {
+			return nil, nil
+		}
+		if reflect.TypeOf(strToInterpolate).Kind() == reflect.String {
+			lstKeys := extractKeys(strToInterpolate.(string))
+			if len(lstKeys.Keys) > 0 {
+				return Do(strToInterpolate.(string), vars)
+			}
+		}
+		return strToInterpolate, err
+	}
+
+	lstFunctionsMapp := funcMap()
+	lstFunctionsMapp["eval"] = eval
+
+	tmpl, err := template.New(generateName()).Funcs(lstFunctionsMapp).Parse(mainStr)
+	if err != nil {
+		return "", fmt.Errorf("error, parsing the full template %s:%v", mainStr, err)
+	}
+
+	var tmplBytes bytes.Buffer
+	err = tmpl.Execute(&tmplBytes, vars)
+	if err != nil {
+		return "", fmt.Errorf("error, executing the full template %s:%v", mainStr, err)
+	}
+
+	return tmplBytes.String(), nil
 }
 
 // Given a parameter it check if the function to_json is contained at last position, if not then it will append.
@@ -109,32 +166,21 @@ func appensJsonContent(str string) (result string, flagContainsJson bool) {
 }
 
 func Do(str string, vars map[string]interface{}) (result interface{}, err error) {
-
-	parameters := extractParamteres(str)
-
-	if len(parameters) == 1 {
-		parameter := extractKeys(parameters[0])
+	if isSingleTemplateExpression(str) {
+		parameter := extractKeys(strings.TrimSpace(str))
 		result, err = execute(parameter, vars)
 		if reflect.TypeOf(result).Name() == "string" ||
 			len(strings.TrimSpace(strings.Replace(str, parameter.originalStr, "", -1))) != 0 {
 			result = strings.Replace(str, parameter.originalStr, result.(string), 1)
 		}
-
 		return result, err
-		// verificar si aparte del parámetro hay máß cosas... si las hay habría que meterlas
-	} else {
-
-		for _, param := range parameters {
-			parameter := extractKeys(param)
-			result, err = execute(parameter, vars)
-			if err != nil {
-				return nil, fmt.Errorf("error, executing the interpolation of %s: %v", parameter.paramter, err)
-			}
-			str = strings.Replace(str, parameter.originalStr, result.(string), 1)
-		}
-		result = str
 	}
-	return
+
+	resultStr, err := executeFullTemplate(str, vars)
+	if err != nil {
+		return nil, err
+	}
+	return resultStr, nil
 }
 
 func generateName() string {
@@ -156,7 +202,10 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 	}
 
 	eval := func(strToInterpolate interface{}) (result interface{}, err error) {
-		if reflect.TypeOf(strToInterpolate).Name() == "string" {
+		if strToInterpolate == nil {
+			return nil, nil
+		}
+		if reflect.TypeOf(strToInterpolate).Kind() == reflect.String {
 			lstKeys := extractKeys(strToInterpolate.(string))
 			if len(lstKeys.Keys) > 0 {
 				return Do(strToInterpolate.(string), vars)
@@ -191,17 +240,15 @@ func execute(param parameter, vars map[string]interface{}) (interface{}, error) 
 
 }
 
-
 type typeValidateFunc func(str string, vars map[string]interface{}) (result interface{}, err error)
 
 // Type of function getFunctions, to use your custom functions
-type TypeProviderFunctions func() template.FuncMap   
+type TypeProviderFunctions func() template.FuncMap
 
 // Data to overwrithe the default behavior, it must be set through the configuration function
 type Configuration struct {
-	FnProviderFunction    TypeProviderFunctions // Update the list of functions to be used within the templates
+	FnProviderFunction TypeProviderFunctions // Update the list of functions to be used within the templates
 }
-
 
 // Configure optional values of struts_validation:
 // funcMap: Function to set de defailt list of funcMap to be used during the template process.
